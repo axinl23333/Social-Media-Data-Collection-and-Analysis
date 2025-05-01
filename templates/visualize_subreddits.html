@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Post Visualizations</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </head>
+    <body>
+        <h1>Post Visualization by Subreddits</h1>
+        <label for="subredditSelect">Select a Subreddit:</label>
+        <select id="subredditSelect" aria-placeholder="select a subreddit">
+            <option value="all">All subreddits</option>
+            <option value="PoliticalDiscussion">PoliticalDiscussion</option>
+            <option value="PoliticalDebate">PoliticalDebate</option>
+            <option value="politics">politics</option>
+            <option value="anime_titties">anime_titties</option>
+            <option value="NeutralPolitics">NeutralPolitics</option>
+        </select>
+
+        <canvas id="postChart" style="margin-top: 20px"></canvas>
+        <script>
+        // Fetch data from the /posts API endpoint
+        let chart;
+
+        function drawChart(subreddit, data) {
+            let filteredData = data;
+
+            if (subreddit !== "all") {
+                filteredData = data.filter(post => post.subreddit === subreddit);
+            }
+
+            const labels = filteredData.map(post => post.subreddit);
+            const counts = filteredData.map(post => post.count);
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            const ctx = document.getElementById('postChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: subreddit === "all" ? "Posts by Subreddit" : `Posts in ${subreddit}`,
+                        data: counts,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        fetch('/posts')
+        .then(response => response.json())
+        .then(data => {
+                drawChart("all", data);
+                
+                const subredditSelect = document.getElementById('subredditSelect');
+                subredditSelect.addEventListener('change', (event) => {
+                    const selectedSubreddit = event.target.value;
+                    drawChart(selectedSubreddit, data);
+                })
+                // const subreddits = data.map(post => post.subreddit);
+                // const counts = data.map(post => post.count);
+            });
+    </script>
+    </body>
+</html>

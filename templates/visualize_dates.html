@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Post Visualizations</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </head>
+    <body>
+        <h1>Post Trends in Different Subreddits</h1>
+        <label for="subredditSelect">Select a Subreddit:</label>
+        <select id="subredditSelect" aria-placeholder="select a subreddit">
+            <option value="all">all</option>
+            <option value="politics">politics</option>
+            <option value="PoliticalDiscussion">PoliticalDiscussion</option>
+            <option value="PoliticalDebate">PoliticalDebate</option>
+            <option value="anime_titties">anime_titties</option>
+            <option value="NeutralPolitics">NeutralPolitics</option>
+        </select>
+        <canvas id="dateChart" style="margin-top: 20px;"></canvas>
+        
+    <script>
+        let chart; // To store the Chart.js instance
+
+        // Function to draw or update the chart
+        function drawChart(subreddit, data) {
+            let filteredData
+            
+            if (subreddit === "all") {
+                const aggregateData = {};
+                data.forEach(item => {
+                    const date = item.post_date.split(' ')[0]
+                    console.log("DATE: ", date)
+                    if (!aggregateData[item.post_date]) {
+                        aggregateData[item.post_date] = 0
+                        console.log(`aggregateData for ${item.post_date}: `, aggregateData[item.post_date])
+                    }
+                    aggregateData[date] += item.post_count
+                    // console.log("UPDATED AGGREGATEDATA: ", aggregateData[date])
+                    console.log(`POST_COUNT FOR ${item.subreddit}: `, item.post_count)
+                })
+                filteredData = Object.keys(aggregateData).map(date => ({
+                    post_date: date,
+                    post_count: aggregateData[date]
+                }))
+            } else {
+                filteredData = data
+                .filter(item => item.subreddit === subreddit)
+                .map(item => ({
+                    post_date: item.post_date.split(' ')[0],
+                    post_count: item.post_count
+                }))
+            }
+
+            // Extract dates and counts for the selected subreddit
+            const labels = filteredData.map(post => post.post_date);
+            const counts = filteredData.map(post => post.post_count);
+
+            console.log("Filtered Data:", filteredData); // Debug filtered data
+            console.log("Labels:", labels);
+            console.log("Counts:", counts);
+
+            // Destroy the existing chart if it exists
+            if (chart) {
+                chart.destroy();
+            }
+
+            // Create a new chart
+            const ctx = document.getElementById('dateChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: subreddit === "all" ? "Total Posts (All Subreddits)" : `Posts in r/${subreddit}`,
+                        data: counts,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Dates'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Post Count'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        fetch('/dates') // Fetch data from the /dates endpoint
+            .then(response => response.json())
+            .then(data => {
+                console.log("Fetched Data: ", data)
+                drawChart('all', data);
+                const subredditSelect = document.getElementById('subredditSelect')
+
+                subredditSelect.addEventListener('change', (event) => {
+                    const selectedSubreddit = event.target.value;
+                    drawChart(selectedSubreddit, data); // Update the chart
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+            });
+    </script>
+    </body>
+</html>
