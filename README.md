@@ -2,7 +2,7 @@
 Full-stack data analysis pipeline designed to collect, classify, and visualize user-generated political content from Reddit and 4chan.
 
 # Tech-stack
-- Python 3.12 - The project is developed and tested using python v3.12
+- <mark>Python 3.12</mark> - The project is developed and tested using python v3.12
 - PostgreSQL v
 - python-dotenv - Python-dotenv reads key-value pairs from a .env file and set them as environment variables
 
